@@ -160,10 +160,12 @@
 #include "Utils/Dumper.h"
 #include "WindowInfosListenerInvoker.h"
 
+#ifdef QCOM_UM_FAMILY
 #if __has_include("QtiGralloc.h")
 #include "QtiGralloc.h"
 #else
 #include "gralloc_priv.h"
+#endif
 #endif
 
 #include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
@@ -3663,7 +3665,11 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
 
 void SurfaceFlinger::processDisplayAdded(const wp<IBinder>& displayToken,
                                          const DisplayDeviceState& state) {
+#ifdef QCOM_UM_FAMILY
     bool canAllocateHwcForVDS = false;
+#else
+    bool canAllocateHwcForVDS = true;
+#endif
     ui::Size resolution(0, 0);
     ui::PixelFormat pixelFormat = static_cast<ui::PixelFormat>(PIXEL_FORMAT_UNKNOWN);
     if (state.physical) {
@@ -3678,21 +3684,22 @@ void SurfaceFlinger::processDisplayAdded(const wp<IBinder>& displayToken,
         status = state.surface->query(NATIVE_WINDOW_FORMAT, &format);
         ALOGE_IF(status != NO_ERROR, "Unable to query format (%d)", status);
         pixelFormat = static_cast<ui::PixelFormat>(format);
+#ifdef QCOM_UM_FAMILY
         if (mVirtualDisplayIdGenerators.hal) {
+            // Check if VDS is allowed to use HWC
             size_t maxVirtualDisplaySize = getHwComposer().getMaxVirtualDisplayDimension();
-            if (maxVirtualDisplaySize == 0 ||
-                ((uint64_t)resolution.width <= maxVirtualDisplaySize &&
+            if (maxVirtualDisplaySize == 0 || ((uint64_t)resolution.width <= maxVirtualDisplaySize &&
                 (uint64_t)resolution.height <= maxVirtualDisplaySize)) {
                 uint64_t usage = 0;
                 // Replace with native_window_get_consumer_usage ?
                 status = state .surface->getConsumerUsage(&usage);
                 ALOGW_IF(status != NO_ERROR, "Unable to query usage (%d)", status);
                 if ((status == NO_ERROR) && canAllocateHwcDisplayIdForVDS(usage)) {
-                   canAllocateHwcForVDS = true;
-               }
+                    canAllocateHwcForVDS = true;
+                }
             }
         }
-
+#endif
     } else {
         // Virtual displays without a surface are dormant:
         // they have external state (layer stack, projection,
@@ -6123,7 +6130,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
         getHwComposer().setPowerMode(displayId, mode);
         if (mLastActiveMode) {
             ALOGI("Deferred active mode change pending, applying now");
-            setDesiredMode({mLastActiveMode.value()}, true);
+            setDesiredMode({mLastActiveMode.value()});
             mLastActiveMode = std::nullopt;
         }
         if (mode != hal::PowerMode::DOZE_SUSPEND &&
@@ -8595,6 +8602,7 @@ gui::DisplayModeSpecs::RefreshRateRanges translate(const FpsRanges& ranges) {
 
 } // namespace
 
+#ifdef QCOM_UM_FAMILY
 bool SurfaceFlinger::canAllocateHwcDisplayIdForVDS(uint64_t usage) {
     uint64_t flag_mask_pvt_wfd = ~0;
     uint64_t flag_mask_hw_video = ~0;
@@ -8608,6 +8616,11 @@ bool SurfaceFlinger::canAllocateHwcDisplayIdForVDS(uint64_t usage) {
     return (allowHwcForVDS || ((usage & flag_mask_pvt_wfd) &&
             (usage & flag_mask_hw_video)));
 }
+#else
+bool SurfaceFlinger::canAllocateHwcDisplayIdForVDS(uint64_t) {
+    return true;
+}
+#endif
 
 status_t SurfaceFlinger::setDesiredDisplayModeSpecs(const sp<IBinder>& displayToken,
                                                     const gui::DisplayModeSpecs& specs) {
