@@ -1783,6 +1783,14 @@ bool InputDispatcher::dispatchKeyLocked(nsecs_t currentTime, std::shared_ptr<con
     // Give the policy a chance to intercept the key.
     if (entry->interceptKeyResult == KeyEntry::InterceptKeyResult::UNKNOWN) {
         if (entry->policyFlags & POLICY_FLAG_PASS_TO_USER) {
+            if (INPUTDISPATCHER_SKIP_EVENT_KEY != 0) {
+                if(entry->keyCode == 0 && entry->scanCode == INPUTDISPATCHER_SKIP_EVENT_KEY) {
+                    entry->interceptKeyResult = KeyEntry::InterceptKeyResult::SKIP;
+                    *dropReason = DropReason::POLICY;
+                    ALOGI("Intercepted the key %i", INPUTDISPATCHER_SKIP_EVENT_KEY);
+                    return true;
+                }
+            }
             sp<IBinder> focusedWindowToken =
                     mFocusResolver.getFocusedWindowToken(getTargetDisplayId(*entry));
 
