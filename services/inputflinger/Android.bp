@@ -78,6 +78,9 @@ cc_defaults {
     static_libs: [
         "libattestation",
     ],
+    lto: {
+        thin: true,
+    },
 }
 
 cc_library_shared {
