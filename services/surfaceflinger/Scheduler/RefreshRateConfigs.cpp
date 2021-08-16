@@ -203,6 +203,8 @@ float RefreshRateConfigs::calculateLayerScoreLocked(const LayerRequirement& laye
         return 0;
     }
 
+    constexpr float kScoreForFractionalPairs = .8f;
+
     // Slightly prefer seamless switches.
     constexpr float kSeamedSwitchPenalty = 0.95f;
     const float seamlessness = isSeamlessSwitch ? 1.0f : kSeamedSwitchPenalty;
@@ -213,6 +215,61 @@ float RefreshRateConfigs::calculateLayerScoreLocked(const LayerRequirement& laye
                 mAppRequestRefreshRates.back()->getFps().getValue();
         // use ratio^2 to get a lower score the more we get further from peak
         return ratio * ratio;
+    }
+
+    const auto displayPeriod = refreshRate.getVsyncPeriod();
+    const auto layerPeriod = layer.desiredRefreshRate.getPeriodNsecs();
+    if (layer.vote == LayerVoteType::ExplicitDefault) {
+        // Find the actual rate the layer will render, assuming
+        // that layerPeriod is the minimal period to render a frame.
+        // For example if layerPeriod is 20ms and displayPeriod is 16ms,
+        // then the actualLayerPeriod will be 32ms, because it is the
+        // smallest multiple of the display period which is >= layerPeriod.
+        auto actualLayerPeriod = displayPeriod;
+        int multiplier = 1;
+        while (layerPeriod > actualLayerPeriod + MARGIN_FOR_PERIOD_CALCULATION) {
+            multiplier++;
+            actualLayerPeriod = displayPeriod * multiplier;
+        }
+
+        // Because of the threshold we used above it's possible that score is slightly
+        // above 1.
+        return std::min(1.0f,
+                        static_cast<float>(layerPeriod) / static_cast<float>(actualLayerPeriod));
+    }
+
+    if (layer.vote == LayerVoteType::ExplicitExactOrMultiple ||
+        layer.vote == LayerVoteType::Heuristic) {
+        if (isFractionalPairOrMultiple(refreshRate.getFps(), layer.desiredRefreshRate)) {
+            return kScoreForFractionalPairs * seamlessness;
+        }
+
+        // Calculate how many display vsyncs we need to present a single frame for this
+        // layer
+        const auto [displayFramesQuotient, displayFramesRemainder] =
+                getDisplayFrames(layerPeriod, displayPeriod);
+        static constexpr size_t MAX_FRAMES_TO_FIT = 10; // Stop calculating when score < 0.1
+        if (displayFramesRemainder == 0) {
+            // Layer desired refresh rate matches the display rate.
+            return 1.0f * seamlessness;
+        }
+
+        if (displayFramesQuotient == 0) {
+            // Layer desired refresh rate is higher than the display rate.
+            return (static_cast<float>(layerPeriod) / static_cast<float>(displayPeriod)) *
+                    (1.0f / (MAX_FRAMES_TO_FIT + 1));
+        }
+
+        // Layer desired refresh rate is lower than the display rate. Check how well it fits
+        // the cadence.
+        auto diff = std::abs(displayFramesRemainder - (displayPeriod - displayFramesRemainder));
+        int iter = 2;
+        while (diff > MARGIN_FOR_PERIOD_CALCULATION && iter < MAX_FRAMES_TO_FIT) {
+            diff = diff - (displayPeriod - diff);
+            iter++;
+        }
+
+        return (1.0f / iter) * seamlessness;
     }
 
     if (layer.vote == LayerVoteType::ExplicitExact) {
