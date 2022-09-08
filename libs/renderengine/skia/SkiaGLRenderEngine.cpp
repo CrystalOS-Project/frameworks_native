@@ -1097,7 +1097,7 @@ void SkiaGLRenderEngine::drawLayersInternal(
             sk_sp<SkShader> shader;
 
             if (layer.source.buffer.useTextureFiltering) {
-                shader = image->makeShader(SkTileMode::kClamp, SkTileMode::kClamp,
+                shader = image->makeShader(SkTileMode::kMirror, SkTileMode::kMirror,
                                            SkSamplingOptions(
                                                    {SkFilterMode::kLinear, SkMipmapMode::kNone}),
                                            &matrix);
