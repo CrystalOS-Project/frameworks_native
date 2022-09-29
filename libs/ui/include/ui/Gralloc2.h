@@ -61,6 +61,9 @@ public:
 
     int unlock(buffer_handle_t bufferHandle) const override;
 
+    status_t isSupported(uint32_t width, uint32_t height, android::PixelFormat format,
+                         uint32_t layerCount, uint64_t usage, bool* outSupported) const override;
+
 private:
     // Determines whether the passed info is compatible with the mapper.
     status_t validateBufferDescriptorInfo(
@@ -68,6 +71,11 @@ private:
 
     sp<hardware::graphics::mapper::V2_0::IMapper> mMapper;
     sp<hardware::graphics::mapper::V2_1::IMapper> mMapperV2_1;
+
+    // Devices using the Gralloc2-on-Gralloc1 passthrough implementation built prior to
+    // aosp/2208777 will fail to lock P010 buffers due to overly restrictive requirements
+    // on allowed YCbCr layouts.
+    const bool mP010Disabled;
 };
 
 class Gralloc2Allocator : public GrallocAllocator {

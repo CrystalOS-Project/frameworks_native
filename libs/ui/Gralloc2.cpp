@@ -16,6 +16,7 @@
 
 #define LOG_TAG "Gralloc2"
 
+#include <android-base/properties.h>
 #include <hidl/ServiceManagement.h>
 #include <hwbinder/IPCThreadState.h>
 #include <ui/Gralloc2.h>
@@ -81,13 +82,17 @@ static inline IMapper::Rect sGralloc2Rect(const Rect& rect) {
     return outRect;
 }
 
+bool IsP010Disabled() {
+    return android::base::GetBoolProperty("ro.gralloc.disablep010", false);
+}
+
 }  // anonymous namespace
 
 void Gralloc2Mapper::preload() {
     android::hardware::preloadPassthroughService<hardware::graphics::mapper::V2_0::IMapper>();
 }
 
-Gralloc2Mapper::Gralloc2Mapper() {
+Gralloc2Mapper::Gralloc2Mapper() : mP010Disabled(IsP010Disabled()) {
     mMapper = hardware::graphics::mapper::V2_0::IMapper::getService();
     if (mMapper == nullptr) {
         ALOGW("mapper 2.x is not supported");
@@ -365,6 +370,16 @@ int Gralloc2Mapper::unlock(buffer_handle_t bufferHandle) const {
     }
 
     return releaseFence;
+}
+
+status_t Gralloc2Mapper::isSupported(uint32_t, uint32_t, android::PixelFormat format, uint32_t,
+                                     uint64_t, bool* outSupported) const {
+    if (format == HAL_PIXEL_FORMAT_YCBCR_P010 && mP010Disabled) {
+        *outSupported = false;
+        return NO_ERROR;
+    }
+
+    return INVALID_OPERATION;
 }
 
 Gralloc2Allocator::Gralloc2Allocator(const Gralloc2Mapper& mapper) : mMapper(mapper) {
