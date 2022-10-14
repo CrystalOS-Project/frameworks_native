@@ -363,7 +363,7 @@ auto RefreshRateConfigs::getBestRefreshRateLocked(const std::vector<LayerRequire
     // Touch boost whenever possible as we opportunistically enter idle aggressively
     if (signals.touch) {
         const DisplayModePtr& max = getMaxRefreshRateByPolicyLocked(anchorGroup);
-        ALOGV("TouchBoost - choose %s", to_string(max->getFps()).c_str());
+        //ALOGV("TouchBoost - choose %s", to_string(max->getFps()).c_str());
         localIsIdle = false;
         return {max, GlobalSignals{.touch = true}};
     }
@@ -376,7 +376,7 @@ auto RefreshRateConfigs::getBestRefreshRateLocked(const std::vector<LayerRequire
 
     if (!signals.touch && signals.idle && !(primaryRangeIsSingleRate && hasExplicitVoteLayers)) {
         const DisplayModePtr& min = getMinRefreshRateByPolicyLocked();
-        ALOGV("Idle - choose %s", to_string(min->getFps()).c_str());
+        //ALOGV("Idle - choose %s", to_string(min->getFps()).c_str());
         localIsIdle = true;
         return {min, GlobalSignals{.idle = true}};
     }
@@ -471,13 +471,13 @@ auto RefreshRateConfigs::getBestRefreshRateLocked(const std::vector<LayerRequire
             : getMaxScoreRefreshRate(scores.begin(), scores.end());
 
     const auto selectivelyForceIdle = [&] () -> std::pair<DisplayModePtr, GlobalSignals>  {
-        ALOGV("localIsIdle: %s", localIsIdle ? "true" : "false");
+        //ALOGV("localIsIdle: %s", localIsIdle ? "true" : "false");
         if (localIsIdle && isStrictlyLess(60_Hz, bestRefreshRate->getFps())) {
             /*
              * We heavily rely on touch to boost higher than 60 fps.
              * Fallback to 60 fps if an higher fps was calculated.
              */
-            ALOGV("Forcing idle");
+            //ALOGV("Forcing idle");
             return {mIdleRefreshRate, kNoSignals};
         }
 
@@ -855,7 +855,7 @@ void RefreshRateConfigs::constructAvailableRefreshRates() {
                 str.push_back(' ');
                 if (isApproxEqual(modeIt->second->getFps(), 60_Hz)) {
                     mIdleRefreshRate = modeIt->second;
-                    ALOGV("idleRefreshRate set!");
+                    //ALOGV("idleRefreshRate set!");
                 }
             }
             return str;
