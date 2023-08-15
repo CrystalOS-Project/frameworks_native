@@ -811,11 +811,10 @@ void SurfaceFlinger::bootFinished() {
 
 void chooseRenderEngineType(renderengine::RenderEngineCreationArgs::Builder& builder) {
     char prop[PROPERTY_VALUE_MAX];
-    property_get(PROPERTY_DEBUG_RENDERENGINE_BACKEND, prop, "");
+    property_get(PROPERTY_DEBUG_RENDERENGINE_BACKEND, prop, "skiaglthreaded");
 
     if (strcmp(prop, "skiagl") == 0) {
-        builder.setThreaded(renderengine::RenderEngine::Threaded::NO)
-                .setGraphicsApi(renderengine::RenderEngine::GraphicsApi::GL);
+        return renderengine::RenderEngine::RenderEngineType::SKIA_GL;
     } else if (strcmp(prop, "skiaglthreaded") == 0) {
         builder.setThreaded(renderengine::RenderEngine::Threaded::YES)
                 .setGraphicsApi(renderengine::RenderEngine::GraphicsApi::GL);
@@ -3838,8 +3837,6 @@ void SurfaceFlinger::processDisplayChanged(const wp<IBinder>& displayToken,
 
     // Recreate the DisplayDevice if the surface or sequence ID changed.
     if (currentBinder != drawingBinder || currentState.sequenceId != drawingState.sequenceId) {
-        getRenderEngine().cleanFramebufferCache();
-
         if (const auto display = getDisplayDeviceLocked(displayToken)) {
             display->disconnect();
             if (display->isVirtual()) {
@@ -8392,8 +8389,13 @@ ftl::SharedFuture<FenceResult> SurfaceFlinger::renderScreenImpl(
     //
     // TODO(b/196334700) Once we use RenderEngineThreaded everywhere we can always defer the call
     // to CompositionEngine::present.
-    auto presentFuture = mRenderEngine->isThreaded() ? ftl::defer(std::move(present)).share()
-                                                     : ftl::yield(present()).share();
+    const bool renderEngineIsThreaded = [&]() {
+        using Type = renderengine::RenderEngine::RenderEngineType;
+        const auto type = mRenderEngine->getRenderEngineType();
+        return type == Type::SKIA_GL_THREADED;
+    }();
+    auto presentFuture = renderEngineIsThreaded ? ftl::defer(std::move(present)).share()
+                                                : ftl::yield(present()).share();
 
     for (auto& [layer, layerFE] : layers) {
         layer->onLayerDisplayed(presentFuture, ui::INVALID_LAYER_STACK,
