@@ -47,10 +47,6 @@ struct Buffer {
     // Fence that will fire when the buffer is ready to be bound.
     sp<Fence> fence = nullptr;
 
-    // Texture identifier to bind the external texture to.
-    // TODO(alecmouri): This is GL-specific...make the type backend-agnostic.
-    uint32_t textureName = 0;
-
     // Whether to use filtering when rendering the texture.
     bool useTextureFiltering = false;
 
@@ -153,7 +149,6 @@ struct LayerSettings {
 // compositionengine/impl/ClientCompositionRequestCache.cpp
 static inline bool operator==(const Buffer& lhs, const Buffer& rhs) {
     return lhs.buffer == rhs.buffer && lhs.fence == rhs.fence &&
-            lhs.textureName == rhs.textureName &&
             lhs.useTextureFiltering == rhs.useTextureFiltering &&
             lhs.textureTransform == rhs.textureTransform &&
             lhs.usePremultipliedAlpha == rhs.usePremultipliedAlpha &&
@@ -197,7 +192,6 @@ static inline void PrintTo(const Buffer& settings, ::std::ostream* os) {
         << (settings.buffer.get() ? decodePixelFormat(settings.buffer->getPixelFormat()).c_str()
                                   : "");
     *os << "\n    .fence = " << settings.fence.get();
-    *os << "\n    .textureName = " << settings.textureName;
     *os << "\n    .useTextureFiltering = " << settings.useTextureFiltering;
     *os << "\n    .textureTransform = ";
     PrintMatrix(settings.textureTransform, os);

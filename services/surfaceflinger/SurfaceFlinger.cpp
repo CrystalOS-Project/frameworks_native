@@ -809,7 +809,8 @@ void SurfaceFlinger::bootFinished() {
     }));
 }
 
-void chooseRenderEngineType(renderengine::RenderEngineCreationArgs::Builder& builder) {
+static std::optional<renderengine::RenderEngine::RenderEngineType>
+chooseRenderEngineTypeViaSysProp() {
     char prop[PROPERTY_VALUE_MAX];
     property_get(PROPERTY_DEBUG_RENDERENGINE_BACKEND, prop, "skiaglthreaded");
 
@@ -3210,23 +3211,6 @@ void SurfaceFlinger::onCompositionPresented(PhysicalDisplayId pacesetterId,
 
     // Cleanup any outstanding resources due to rendering a prior frame.
     getRenderEngine().cleanupPostRender();
-
-    {
-        std::lock_guard lock(mTexturePoolMutex);
-        if (mTexturePool.size() < mTexturePoolSize) {
-            const size_t refillCount = mTexturePoolSize - mTexturePool.size();
-            const size_t offset = mTexturePool.size();
-            mTexturePool.resize(mTexturePoolSize);
-            getRenderEngine().genTextures(refillCount, mTexturePool.data() + offset);
-            ATRACE_INT("TexturePoolSize", mTexturePool.size());
-        } else if (mTexturePool.size() > mTexturePoolSize) {
-            const size_t deleteCount = mTexturePool.size() - mTexturePoolSize;
-            const size_t offset = mTexturePoolSize;
-            getRenderEngine().deleteTextures(deleteCount, mTexturePool.data() + offset);
-            mTexturePool.resize(mTexturePoolSize);
-            ATRACE_INT("TexturePoolSize", mTexturePool.size());
-        }
-    }
 
     if (mNumTrustedPresentationListeners > 0) {
         // We avoid any reverse traversal upwards so this shouldn't be too expensive
@@ -6002,7 +5986,6 @@ status_t SurfaceFlinger::createLayer(LayerCreationArgs& args, gui::CreateSurface
 
 status_t SurfaceFlinger::createBufferStateLayer(LayerCreationArgs& args, sp<IBinder>* handle,
                                                 sp<Layer>* outLayer) {
-    args.textureName = getNewTexture();
     *outLayer = getFactory().createBufferStateLayer(args);
     *handle = (*outLayer)->getHandle();
     return NO_ERROR;
