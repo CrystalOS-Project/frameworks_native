@@ -54,7 +54,6 @@ public:
     ftl::Future<FenceResult> drawLayers(const DisplaySettings& display,
                                         const std::vector<LayerSettings>& layers,
                                         const std::shared_ptr<ExternalTexture>& buffer,
-                                        const bool useFramebufferCache,
                                         base::unique_fd&& bufferFence) override;
 
     int getContextPriority() override;
@@ -71,7 +70,7 @@ protected:
                             const DisplaySettings& display,
                             const std::vector<LayerSettings>& layers,
                             const std::shared_ptr<ExternalTexture>& buffer,
-                            const bool useFramebufferCache, base::unique_fd&& bufferFence) override;
+                            base::unique_fd&& bufferFence) override;
 
 private:
     void threadMain(CreateInstanceFactory factory);

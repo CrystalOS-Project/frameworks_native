@@ -104,8 +104,7 @@ std::pair<uint32_t, uint32_t> getDisplaySize() {
     return std::pair<uint32_t, uint32_t>(width, height);
 }
 
-static std::unique_ptr<RenderEngine> createRenderEngine(RenderEngine::Threaded threaded,
-                                                        RenderEngine::GraphicsApi graphicsApi) {
+static std::unique_ptr<RenderEngine> createRenderEngine(RenderEngine::RenderEngineType type) {
     auto args = RenderEngineCreationArgs::Builder()
                         .setPixelFormat(static_cast<int>(ui::PixelFormat::RGBA_8888))
                         .setImageCacheSize(1)
@@ -166,10 +165,7 @@ static std::shared_ptr<ExternalTexture> copyBuffer(RenderEngine& re,
     };
     auto layers = std::vector<LayerSettings>{layer};
 
-    sp<Fence> waitFence =
-            re.drawLayers(display, layers, texture, kUseFrameBufferCache, base::unique_fd())
-                    .get()
-                    .value();
+    sp<Fence> waitFence = re.drawLayers(display, layers, texture, base::unique_fd()).get().value();
     waitFence->waitForever(LOG_TAG);
     return texture;
 }
@@ -198,10 +194,8 @@ static void benchDrawLayers(RenderEngine& re, const std::vector<LayerSettings>& 
 
     // This loop starts and stops the timer.
     for (auto _ : benchState) {
-        sp<Fence> waitFence = re.drawLayers(display, layers, outputBuffer, kUseFrameBufferCache,
-                                            base::unique_fd())
-                                      .get()
-                                      .value();
+        sp<Fence> waitFence =
+                re.drawLayers(display, layers, outputBuffer, base::unique_fd()).get().value();
         waitFence->waitForever(LOG_TAG);
     }
 

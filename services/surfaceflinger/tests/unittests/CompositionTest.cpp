@@ -320,7 +320,7 @@ struct BaseDisplayVariant {
                 .WillRepeatedly([&](const renderengine::DisplaySettings& displaySettings,
                                     const std::vector<renderengine::LayerSettings>&,
                                     const std::shared_ptr<renderengine::ExternalTexture>&,
-                                    base::unique_fd&&) -> ftl::Future<FenceResult> {
+                                    base::unique_fd&&) -> std::future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -371,7 +371,7 @@ struct BaseDisplayVariant {
                 .WillRepeatedly([&](const renderengine::DisplaySettings& displaySettings,
                                     const std::vector<renderengine::LayerSettings>&,
                                     const std::shared_ptr<renderengine::ExternalTexture>&,
-                                    base::unique_fd&&) -> ftl::Future<FenceResult> {
+                                    base::unique_fd&&) -> std::future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -571,7 +571,7 @@ struct BaseLayerProperties {
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
                               const std::shared_ptr<renderengine::ExternalTexture>&,
-                              base::unique_fd&&) -> ftl::Future<FenceResult> {
+                              base::unique_fd&&) -> std::future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -621,7 +621,7 @@ struct BaseLayerProperties {
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
                               const std::shared_ptr<renderengine::ExternalTexture>&,
-                              base::unique_fd&&) -> ftl::Future<FenceResult> {
+                              base::unique_fd&&) -> std::future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -704,7 +704,7 @@ struct CommonSecureLayerProperties : public BaseLayerProperties<LayerProperties>
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
                               const std::shared_ptr<renderengine::ExternalTexture>&,
-                              base::unique_fd&&) -> ftl::Future<FenceResult> {
+                              base::unique_fd&&) -> std::future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
