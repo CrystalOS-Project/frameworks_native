@@ -41,7 +41,7 @@ public:
 
     RenderEngineThreaded(CreateInstanceFactory factory);
     ~RenderEngineThreaded() override;
-    std::future<void> primeCache() override;
+    std::future<void> primeCache(bool shouldPrimeUltraHDR) override;
 
     void dump(std::string& result) override;
 

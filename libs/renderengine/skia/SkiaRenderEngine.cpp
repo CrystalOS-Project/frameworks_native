@@ -244,8 +244,8 @@ namespace skia {
 
 using base::StringAppendF;
 
-std::future<void> SkiaRenderEngine::primeCache() {
-    Cache::primeShaderCache(this);
+std::future<void> SkiaRenderEngine::primeCache(bool shouldPrimeUltraHDR) {
+    Cache::primeShaderCache(this, shouldPrimeUltraHDR);
     return {};
 }
 
