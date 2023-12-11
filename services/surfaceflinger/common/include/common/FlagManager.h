@@ -66,6 +66,7 @@ public:
     bool fp16_client_target() const;
     bool game_default_frame_rate() const;
     bool enable_layer_command_batching() const;
+    bool screenshot_fence_preservation() const;
     bool vulkan_renderengine() const;
     bool renderable_buffer_usage() const;
     bool restore_blur_step() const;
