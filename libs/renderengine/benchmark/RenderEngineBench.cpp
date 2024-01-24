@@ -30,46 +30,6 @@ using namespace android;
 using namespace android::renderengine;
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Helpers for Benchmark::Apply
-///////////////////////////////////////////////////////////////////////////////
-
-std::string RenderEngineTypeName(RenderEngine::RenderEngineType type) {
-    switch (type) {
-        case RenderEngine::RenderEngineType::SKIA_GL_THREADED:
-            return "skiaglthreaded";
-        case RenderEngine::RenderEngineType::SKIA_GL:
-            return "skiagl";
-        case RenderEngine::RenderEngineType::SKIA_VK:
-            return "skiavk";
-        case RenderEngine::RenderEngineType::SKIA_VK_THREADED:
-            return "skiavkthreaded";
-    }
-}
-
-/**
- * Passed (indirectly - see RunSkiaGLThreaded) to Benchmark::Apply to create a
- * Benchmark which specifies which RenderEngineType it uses.
- *
- * This simplifies calling ->Arg(type)->Arg(type) and provides strings to make
- * it obvious which version is being run.
- *
- * @param b The benchmark family
- * @param type The type of RenderEngine to use.
- */
-static void AddRenderEngineType(benchmark::internal::Benchmark* b,
-                                RenderEngine::RenderEngineType type) {
-    b->Arg(static_cast<int64_t>(type));
-    b->ArgName(RenderEngineTypeName(type));
-}
-
-/**
- * Run a benchmark once using SKIA_GL_THREADED.
- */
-static void RunSkiaGLThreaded(benchmark::internal::Benchmark* b) {
-    AddRenderEngineType(b, RenderEngine::RenderEngineType::SKIA_GL_THREADED);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 //  Helpers for calling drawLayers
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -104,7 +64,8 @@ std::pair<uint32_t, uint32_t> getDisplaySize() {
     return std::pair<uint32_t, uint32_t>(width, height);
 }
 
-static std::unique_ptr<RenderEngine> createRenderEngine(RenderEngine::RenderEngineType type) {
+static std::unique_ptr<RenderEngine> createRenderEngine(RenderEngine::Threaded threaded,
+                                                        RenderEngine::GraphicsApi graphicsApi) {
     auto args = RenderEngineCreationArgs::Builder()
                         .setPixelFormat(static_cast<int>(ui::PixelFormat::RGBA_8888))
                         .setImageCacheSize(1)

@@ -92,11 +92,14 @@ public:
         REALTIME = 4,
     };
 
-    enum class RenderEngineType {
-        SKIA_GL = 3,
-        SKIA_GL_THREADED = 4,
-        SKIA_VK = 5,
-        SKIA_VK_THREADED = 6,
+    enum class Threaded {
+        NO,
+        YES,
+    };
+
+    enum class GraphicsApi {
+        GL,
+        VK,
     };
 
     static std::unique_ptr<RenderEngine> create(const RenderEngineCreationArgs& args);
@@ -192,7 +195,7 @@ public:
     virtual void setEnableTracing(bool /*tracingEnabled*/) {}
 
 protected:
-    RenderEngine() : RenderEngine(RenderEngineType::SKIA_GL) {}
+    RenderEngine() : RenderEngine(Threaded::NO) {}
 
     RenderEngine(Threaded threaded) : mThreaded(threaded) {}
 

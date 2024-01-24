@@ -126,12 +126,7 @@ void FlagManager::dump(std::string& result) const {
     DUMP_READ_ONLY_FLAG(fp16_client_target);
     DUMP_READ_ONLY_FLAG(game_default_frame_rate);
     DUMP_READ_ONLY_FLAG(enable_layer_command_batching);
-    DUMP_READ_ONLY_FLAG(screenshot_fence_preservation);
     DUMP_READ_ONLY_FLAG(vulkan_renderengine);
-    DUMP_READ_ONLY_FLAG(renderable_buffer_usage);
-    DUMP_READ_ONLY_FLAG(restore_blur_step);
-    DUMP_READ_ONLY_FLAG(dont_skip_on_early_ro);
-    DUMP_READ_ONLY_FLAG(protected_if_client);
 #undef DUMP_READ_ONLY_FLAG
 #undef DUMP_SERVER_FLAG
 #undef DUMP_FLAG_INTERVAL
@@ -206,12 +201,7 @@ FLAG_MANAGER_READ_ONLY_FLAG(display_protected, "")
 FLAG_MANAGER_READ_ONLY_FLAG(fp16_client_target, "debug.sf.fp16_client_target")
 FLAG_MANAGER_READ_ONLY_FLAG(game_default_frame_rate, "")
 FLAG_MANAGER_READ_ONLY_FLAG(enable_layer_command_batching, "")
-FLAG_MANAGER_READ_ONLY_FLAG(screenshot_fence_preservation, "debug.sf.screenshot_fence_preservation")
 FLAG_MANAGER_READ_ONLY_FLAG(vulkan_renderengine, "debug.renderengine.vulkan")
-FLAG_MANAGER_READ_ONLY_FLAG(renderable_buffer_usage, "")
-FLAG_MANAGER_READ_ONLY_FLAG(restore_blur_step, "debug.renderengine.restore_blur_step")
-FLAG_MANAGER_READ_ONLY_FLAG(dont_skip_on_early_ro, "")
-FLAG_MANAGER_READ_ONLY_FLAG(protected_if_client, "")
 
 /// Trunk stable server flags ///
 FLAG_MANAGER_SERVER_FLAG(refresh_rate_overlay_on_external_display, "")

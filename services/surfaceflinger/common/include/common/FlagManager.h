@@ -66,12 +66,7 @@ public:
     bool fp16_client_target() const;
     bool game_default_frame_rate() const;
     bool enable_layer_command_batching() const;
-    bool screenshot_fence_preservation() const;
     bool vulkan_renderengine() const;
-    bool renderable_buffer_usage() const;
-    bool restore_blur_step() const;
-    bool dont_skip_on_early_ro() const;
-    bool protected_if_client() const;
 
 protected:
     // overridden for unit tests
