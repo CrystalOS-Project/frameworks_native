@@ -68,6 +68,7 @@ public:
     bool enable_layer_command_batching() const;
     bool vulkan_renderengine() const;
     bool renderable_buffer_usage() const;
+    bool restore_blur_step() const;
 
 protected:
     // overridden for unit tests
