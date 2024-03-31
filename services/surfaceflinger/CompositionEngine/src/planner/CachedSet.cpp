@@ -275,9 +275,11 @@ void CachedSet::render(renderengine::RenderEngine& renderEngine, TexturePool& te
         bufferFence.reset(texture->getReadyFence()->dup());
     }
 
+    constexpr bool kUseFramebufferCache = false;
+
     auto fenceResult = renderEngine
                                .drawLayers(displaySettings, layerSettings, texture->get(),
-                                           std::move(bufferFence))
+                                           kUseFramebufferCache, std::move(bufferFence))
                                .get();
 
     if (fenceStatus(fenceResult) == NO_ERROR) {
