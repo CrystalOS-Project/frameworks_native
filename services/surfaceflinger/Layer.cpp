@@ -149,6 +149,7 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
                 args.metadata.getInt32(gui::METADATA_WINDOW_TYPE, 0))),
         mLayerCreationFlags(args.flags),
         mBorderEnabled(false),
+        mTextureName(args.textureName),
         mLegacyLayerFE(args.flinger->getFactory().createLayerFE(mName)) {
     ALOGV("Creating Layer %s", getDebugName());
 
@@ -215,6 +216,7 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
 
     mSnapshot->sequence = sequence;
     mSnapshot->name = getDebugName();
+    mSnapshot->textureName = mTextureName;
     mSnapshot->premultipliedAlpha = mPremultipliedAlpha;
     mSnapshot->parentTransform = {};
 }
@@ -235,6 +237,13 @@ Layer::~Layer() {
         callReleaseBufferCallback(mDrawingState.releaseBufferListener,
                                   mBufferInfo.mBuffer->getBuffer(), mBufferInfo.mFrameNumber,
                                   mBufferInfo.mFence);
+    }
+    if (!isClone()) {
+        // The original layer and the clone layer share the same texture. Therefore, only one of
+        // the layers, in this case the original layer, needs to handle the deletion. The original
+        // layer and the clone should be removed at the same time so there shouldn't be any issue
+        // with the clone layer trying to use the deleted texture.
+        mFlinger->deleteTextureAsync(mTextureName);
     }
     const int32_t layerId = getSequence();
     mFlinger->mTimeStats->onDestroy(layerId);
@@ -3690,6 +3699,7 @@ Rect Layer::computeBufferCrop(const State& s) {
 sp<Layer> Layer::createClone(uint32_t mirrorRootId) {
     surfaceflinger::LayerCreationArgs args(mFlinger.get(), nullptr, mName + " (Mirror)", 0,
                                            LayerMetadata());
+    args.textureName = mTextureName;
     sp<Layer> layer = mFlinger->getFactory().createBufferStateLayer(args);
     layer->setInitialValuesForClone(sp<Layer>::fromExisting(this), mirrorRootId);
     return layer;

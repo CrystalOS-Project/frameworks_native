@@ -665,6 +665,7 @@ public:
     auto& mutableVisibleRegionsDirty() { return mFlinger->mVisibleRegionsDirty; }
     auto& mutableMainThreadId() { return mFlinger->mMainThreadId; }
     auto& mutablePendingHotplugEvents() { return mFlinger->mPendingHotplugEvents; }
+    auto& mutableTexturePool() { return mFlinger->mTexturePool; }
     auto& mutableTransactionFlags() { return mFlinger->mTransactionFlags; }
     auto& mutableDebugDisableHWC() { return mFlinger->mDebugDisableHWC; }
     auto& mutableMaxRenderTargetSize() { return mFlinger->mMaxRenderTargetSize; }

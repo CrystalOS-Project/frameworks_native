@@ -46,6 +46,8 @@ public:
 
     void dump(std::string& result) override;
 
+    void genTextures(size_t count, uint32_t* names) override;
+    void deleteTextures(size_t count, uint32_t const* names) override;
     size_t getMaxTextureSize() const override;
     size_t getMaxViewportDims() const override;
 
