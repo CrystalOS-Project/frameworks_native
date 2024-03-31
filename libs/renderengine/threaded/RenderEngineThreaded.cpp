@@ -232,13 +232,13 @@ void RenderEngineThreaded::cleanupPostRender() {
             ATRACE_NAME("REThreaded::cleanupPostRender");
             instance.cleanupPostRender();
         });
-        mNeedsPostRenderCleanup = false;
     }
     mCondition.notify_one();
 }
 
 bool RenderEngineThreaded::canSkipPostRenderCleanup() const {
-    return !mNeedsPostRenderCleanup;
+    waitUntilInitialized();
+    return mRenderEngine->canSkipPostRenderCleanup();
 }
 
 void RenderEngineThreaded::drawLayersInternal(
@@ -258,7 +258,6 @@ ftl::Future<FenceResult> RenderEngineThreaded::drawLayers(
     int fd = bufferFence.release();
     {
         std::lock_guard lock(mThreadMutex);
-        mNeedsPostRenderCleanup = true;
         mFunctionCalls.push(
                 [resultPromise, display, layers, buffer, fd](renderengine::RenderEngine& instance) {
                     ATRACE_NAME("REThreaded::drawLayers");
