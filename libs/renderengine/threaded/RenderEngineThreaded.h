@@ -60,6 +60,7 @@ public:
                                         const bool useFramebufferCache,
                                         base::unique_fd&& bufferFence) override;
 
+    void cleanFramebufferCache() override;
     int getContextPriority() override;
     bool supportsBackgroundBlur() override;
     void onActiveDisplaySizeChanged(ui::Size size) override;

@@ -18,6 +18,7 @@
 
 #include <cutils/properties.h>
 #include <log/log.h>
+#include "gl/GLESRenderEngine.h"
 #include "renderengine/ExternalTexture.h"
 #include "threaded/RenderEngineThreaded.h"
 
@@ -29,6 +30,11 @@ namespace renderengine {
 
 std::unique_ptr<RenderEngine> RenderEngine::create(const RenderEngineCreationArgs& args) {
     switch (args.renderEngineType) {
+        case RenderEngineType::THREADED:
+            ALOGD("Threaded RenderEngine with GLES Backend");
+            return renderengine::threaded::RenderEngineThreaded::create(
+                    [args]() { return android::renderengine::gl::GLESRenderEngine::create(args); },
+                    args.renderEngineType);
         case RenderEngineType::SKIA_GL:
             ALOGD("RenderEngine with SkiaGL Backend");
             return renderengine::skia::SkiaGLRenderEngine::create(args);
@@ -50,6 +56,10 @@ std::unique_ptr<RenderEngine> RenderEngine::create(const RenderEngineCreationArg
                         return android::renderengine::skia::SkiaVkRenderEngine::create(args);
                     },
                     args.renderEngineType);
+        case RenderEngineType::GLES:
+        default:
+            ALOGD("RenderEngine with GLES Backend");
+            return renderengine::gl::GLESRenderEngine::create(args);
     }
 }
 
