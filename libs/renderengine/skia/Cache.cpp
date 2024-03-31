@@ -17,7 +17,6 @@
 #include "AutoBackendTexture.h"
 #include "SkiaRenderEngine.h"
 #include "android-base/unique_fd.h"
-#include "cutils/properties.h"
 #include "renderengine/DisplaySettings.h"
 #include "renderengine/LayerSettings.h"
 #include "renderengine/impl/ExternalTexture.h"
@@ -637,7 +636,7 @@ static void drawP3ImageLayers(SkiaRenderEngine* renderengine, const DisplaySetti
 //    kFlushAfterEveryLayer = true
 // in external/skia/src/gpu/gl/builders/GrGLShaderStringBuilder.cpp
 //    gPrintSKSL = true
-void Cache::primeShaderCache(SkiaRenderEngine* renderengine, bool shouldPrimeUltraHDR) {
+void Cache::primeShaderCache(SkiaRenderEngine* renderengine) {
     const int previousCount = renderengine->reportShadersCompiled();
     if (previousCount) {
         ALOGD("%d Shaders already compiled before Cache::primeShaderCache ran\n", previousCount);
@@ -763,19 +762,16 @@ void Cache::primeShaderCache(SkiaRenderEngine* renderengine, bool shouldPrimeUlt
                                          externalTexture);
 
         drawClippedDimmedImageLayers(renderengine, bt2020Display, dstTexture, externalTexture);
+        drawBT2020ClippedImageLayers(renderengine, bt2020Display, dstTexture, externalTexture);
 
-        if (shouldPrimeUltraHDR) {
-            drawBT2020ClippedImageLayers(renderengine, bt2020Display, dstTexture, externalTexture);
+        drawBT2020ImageLayers(renderengine, bt2020Display, dstTexture, externalTexture);
+        drawBT2020ImageLayers(renderengine, p3Display, dstTexture, externalTexture);
 
-            drawBT2020ImageLayers(renderengine, bt2020Display, dstTexture, externalTexture);
-            drawBT2020ImageLayers(renderengine, p3Display, dstTexture, externalTexture);
+        drawExtendedHDRImageLayers(renderengine, display, dstTexture, externalTexture);
+        drawExtendedHDRImageLayers(renderengine, p3Display, dstTexture, externalTexture);
+        drawExtendedHDRImageLayers(renderengine, p3DisplayEnhance, dstTexture, externalTexture);
 
-            drawExtendedHDRImageLayers(renderengine, display, dstTexture, externalTexture);
-            drawExtendedHDRImageLayers(renderengine, p3Display, dstTexture, externalTexture);
-            drawExtendedHDRImageLayers(renderengine, p3DisplayEnhance, dstTexture, externalTexture);
-
-            drawP3ImageLayers(renderengine, p3DisplayEnhance, dstTexture, externalTexture);
-        }
+        drawP3ImageLayers(renderengine, p3DisplayEnhance, dstTexture, externalTexture);
 
         // draw one final layer synchronously to force GL submit
         LayerSettings layer{
