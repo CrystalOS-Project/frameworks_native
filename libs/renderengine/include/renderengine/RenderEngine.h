@@ -35,7 +35,7 @@
 #include <memory>
 
 /**
- * Allows to set RenderEngine backend to GLES (default) or SkiaGL (NOT yet supported).
+ * Allows to override the RenderEngine backend.
  */
 #define PROPERTY_DEBUG_RENDERENGINE_BACKEND "debug.renderengine.backend"
 
@@ -94,16 +94,19 @@ public:
         REALTIME = 4,
     };
 
-    enum class RenderEngineType {
-        GLES = 1,
-        THREADED = 2,
-        SKIA_GL = 3,
-        SKIA_GL_THREADED = 4,
-        SKIA_VK = 5,
-        SKIA_VK_THREADED = 6,
+    enum class Threaded {
+        NO,
+        YES,
+    };
+
+    enum class GraphicsApi {
+        GL,
+        VK,
     };
 
     static std::unique_ptr<RenderEngine> create(const RenderEngineCreationArgs& args);
+
+    static bool canSupport(GraphicsApi);
 
     virtual ~RenderEngine() = 0;
 
@@ -189,10 +192,9 @@ public:
     // query is required to be thread safe.
     virtual bool supportsBackgroundBlur() = 0;
 
-    // Returns the current type of RenderEngine instance that was created.
     // TODO(b/180767535): This is only implemented to allow for backend-specific behavior, which
     // we should not allow in general, so remove this.
-    RenderEngineType getRenderEngineType() const { return mRenderEngineType; }
+    bool isThreaded() const { return mThreaded == Threaded::YES; }
 
     static void validateInputBufferUsage(const sp<GraphicBuffer>&);
     static void validateOutputBufferUsage(const sp<GraphicBuffer>&);
@@ -204,9 +206,9 @@ public:
     virtual void setEnableTracing(bool /*tracingEnabled*/) {}
 
 protected:
-    RenderEngine() : RenderEngine(RenderEngineType::GLES) {}
+    RenderEngine() : RenderEngine(Threaded::NO) {}
 
-    RenderEngine(RenderEngineType type) : mRenderEngineType(type) {}
+    RenderEngine(Threaded threaded) : mThreaded(threaded) {}
 
     // Maps GPU resources for this buffer.
     // Note that work may be deferred to an additional thread, i.e. this call
@@ -241,7 +243,7 @@ protected:
     friend class impl::ExternalTexture;
     friend class threaded::RenderEngineThreaded;
     friend class RenderEngineTest_cleanupPostRender_cleansUpOnce_Test;
-    const RenderEngineType mRenderEngineType;
+    const Threaded mThreaded;
 
     // Update protectedContext mode depending on whether or not any layer has a protected buffer.
     void updateProtectedContext(const std::vector<LayerSettings>&,
@@ -265,7 +267,8 @@ struct RenderEngineCreationArgs {
     bool precacheToneMapperShaderOnly;
     bool supportsBackgroundBlur;
     RenderEngine::ContextPriority contextPriority;
-    RenderEngine::RenderEngineType renderEngineType;
+    RenderEngine::Threaded threaded;
+    RenderEngine::GraphicsApi graphicsApi;
 
     struct Builder;
 
@@ -275,14 +278,16 @@ private:
                              bool _enableProtectedContext, bool _precacheToneMapperShaderOnly,
                              bool _supportsBackgroundBlur,
                              RenderEngine::ContextPriority _contextPriority,
-                             RenderEngine::RenderEngineType _renderEngineType)
+                             RenderEngine::Threaded _threaded,
+                             RenderEngine::GraphicsApi _graphicsApi)
           : pixelFormat(_pixelFormat),
             imageCacheSize(_imageCacheSize),
             enableProtectedContext(_enableProtectedContext),
             precacheToneMapperShaderOnly(_precacheToneMapperShaderOnly),
             supportsBackgroundBlur(_supportsBackgroundBlur),
             contextPriority(_contextPriority),
-            renderEngineType(_renderEngineType) {}
+            threaded(_threaded),
+            graphicsApi(_graphicsApi) {}
     RenderEngineCreationArgs() = delete;
 };
 
@@ -313,14 +318,18 @@ struct RenderEngineCreationArgs::Builder {
         this->contextPriority = contextPriority;
         return *this;
     }
-    Builder& setRenderEngineType(RenderEngine::RenderEngineType renderEngineType) {
-        this->renderEngineType = renderEngineType;
+    Builder& setThreaded(RenderEngine::Threaded threaded) {
+        this->threaded = threaded;
+        return *this;
+    }
+    Builder& setGraphicsApi(RenderEngine::GraphicsApi graphicsApi) {
+        this->graphicsApi = graphicsApi;
         return *this;
     }
     RenderEngineCreationArgs build() const {
         return RenderEngineCreationArgs(pixelFormat, imageCacheSize, enableProtectedContext,
                                         precacheToneMapperShaderOnly, supportsBackgroundBlur,
-                                        contextPriority, renderEngineType);
+                                        contextPriority, threaded, graphicsApi);
     }
 
 private:
@@ -331,8 +340,8 @@ private:
     bool precacheToneMapperShaderOnly = false;
     bool supportsBackgroundBlur = false;
     RenderEngine::ContextPriority contextPriority = RenderEngine::ContextPriority::MEDIUM;
-    RenderEngine::RenderEngineType renderEngineType =
-            RenderEngine::RenderEngineType::SKIA_GL_THREADED;
+    RenderEngine::Threaded threaded = RenderEngine::Threaded::YES;
+    RenderEngine::GraphicsApi graphicsApi = RenderEngine::GraphicsApi::GL;
 };
 
 } // namespace renderengine

@@ -25,6 +25,7 @@
 
 #include <compositionengine/Display.h>
 #include <compositionengine/mock/DisplaySurface.h>
+#include <ftl/future.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <gui/IProducerListener.h>
@@ -229,14 +230,6 @@ void CompositionTest::captureScreenComposition() {
     LayerCase::cleanup(this);
 }
 
-template <class T>
-std::future<T> futureOf(T obj) {
-    std::promise<T> resultPromise;
-    std::future<T> resultFuture = resultPromise.get_future();
-    resultPromise.set_value(std::move(obj));
-    return resultFuture;
-}
-
 /* ------------------------------------------------------------------------
  * Variants for each display configuration which can be tested
  */
@@ -329,13 +322,13 @@ struct BaseDisplayVariant {
                 .WillRepeatedly([&](const renderengine::DisplaySettings& displaySettings,
                                     const std::vector<renderengine::LayerSettings>&,
                                     const std::shared_ptr<renderengine::ExternalTexture>&,
-                                    const bool, base::unique_fd&&) -> std::future<FenceResult> {
+                                    base::unique_fd&&) -> ftl::Future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.clip);
-                    return futureOf<FenceResult>(Fence::NO_FENCE);
+                    return ftl::yield<FenceResult>(Fence::NO_FENCE);
                 });
     }
 
@@ -380,14 +373,14 @@ struct BaseDisplayVariant {
                 .WillRepeatedly([&](const renderengine::DisplaySettings& displaySettings,
                                     const std::vector<renderengine::LayerSettings>&,
                                     const std::shared_ptr<renderengine::ExternalTexture>&,
-                                    const bool, base::unique_fd&&) -> std::future<FenceResult> {
+                                    base::unique_fd&&) -> ftl::Future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.clip);
                     EXPECT_EQ(ui::Dataspace::UNKNOWN, displaySettings.outputDataspace);
-                    return futureOf<FenceResult>(Fence::NO_FENCE);
+                    return ftl::yield<FenceResult>(Fence::NO_FENCE);
                 });
     }
 
@@ -579,8 +572,8 @@ struct BaseLayerProperties {
         EXPECT_CALL(*test->mRenderEngine, drawLayers)
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
-                              const std::shared_ptr<renderengine::ExternalTexture>&, const bool,
-                              base::unique_fd&&) -> std::future<FenceResult> {
+                              const std::shared_ptr<renderengine::ExternalTexture>&,
+                              base::unique_fd&&) -> ftl::Future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -588,7 +581,8 @@ struct BaseLayerProperties {
                               displaySettings.clip);
                     // screen capture adds an additional color layer as an alpha
                     // prefill, so gtet the back layer.
-                    std::future<FenceResult> resultFuture = futureOf<FenceResult>(Fence::NO_FENCE);
+                    ftl::Future<FenceResult> resultFuture =
+                            ftl::yield<FenceResult>(Fence::NO_FENCE);
                     if (layerSettings.empty()) {
                         ADD_FAILURE() << "layerSettings was not expected to be empty in "
                                          "setupREBufferCompositionCommonCallExpectations "
@@ -629,8 +623,8 @@ struct BaseLayerProperties {
         EXPECT_CALL(*test->mRenderEngine, drawLayers)
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
-                              const std::shared_ptr<renderengine::ExternalTexture>&, const bool,
-                              base::unique_fd&&) -> std::future<FenceResult> {
+                              const std::shared_ptr<renderengine::ExternalTexture>&,
+                              base::unique_fd&&) -> ftl::Future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -638,7 +632,8 @@ struct BaseLayerProperties {
                               displaySettings.clip);
                     // screen capture adds an additional color layer as an alpha
                     // prefill, so get the back layer.
-                    std::future<FenceResult> resultFuture = futureOf<FenceResult>(Fence::NO_FENCE);
+                    ftl::Future<FenceResult> resultFuture =
+                            ftl::yield<FenceResult>(Fence::NO_FENCE);
                     if (layerSettings.empty()) {
                         ADD_FAILURE()
                                 << "layerSettings was not expected to be empty in "
@@ -711,8 +706,8 @@ struct CommonSecureLayerProperties : public BaseLayerProperties<LayerProperties>
         EXPECT_CALL(*test->mRenderEngine, drawLayers)
                 .WillOnce([&](const renderengine::DisplaySettings& displaySettings,
                               const std::vector<renderengine::LayerSettings>& layerSettings,
-                              const std::shared_ptr<renderengine::ExternalTexture>&, const bool,
-                              base::unique_fd&&) -> std::future<FenceResult> {
+                              const std::shared_ptr<renderengine::ExternalTexture>&,
+                              base::unique_fd&&) -> ftl::Future<FenceResult> {
                     EXPECT_EQ(DEFAULT_DISPLAY_MAX_LUMINANCE, displaySettings.maxLuminance);
                     EXPECT_EQ(Rect(DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
                               displaySettings.physicalDisplay);
@@ -720,7 +715,8 @@ struct CommonSecureLayerProperties : public BaseLayerProperties<LayerProperties>
                               displaySettings.clip);
                     // screen capture adds an additional color layer as an alpha
                     // prefill, so get the back layer.
-                    std::future<FenceResult> resultFuture = futureOf<FenceResult>(Fence::NO_FENCE);
+                    ftl::Future<FenceResult> resultFuture =
+                            ftl::yield<FenceResult>(Fence::NO_FENCE);
                     if (layerSettings.empty()) {
                         ADD_FAILURE() << "layerSettings was not expected to be empty in "
                                          "setupInsecureREBufferCompositionCommonCallExpectations "

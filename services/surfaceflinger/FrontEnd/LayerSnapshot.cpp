@@ -316,6 +316,7 @@ std::ostream& operator<<(std::ostream& out, const LayerSnapshot& obj) {
     if (obj.hasInputInfo()) {
         out << "\n    input{"
             << "(" << obj.inputInfo.inputConfig.string() << ")";
+        if (obj.inputInfo.canOccludePresentation) out << " canOccludePresentation";
         if (obj.touchCropId != UNASSIGNED_LAYER_ID) out << " touchCropId=" << obj.touchCropId;
         if (obj.inputInfo.replaceTouchableRegionWithCrop) out << " replaceTouchableRegionWithCrop";
         auto touchableRegion = obj.inputInfo.touchableRegion.getBounds();
@@ -379,6 +380,9 @@ void LayerSnapshot::merge(const RequestedLayerState& requested, bool forceUpdate
     }
     if (forceUpdate || requested.what & layer_state_t::eExtendedRangeBrightnessChanged) {
         currentHdrSdrRatio = requested.currentHdrSdrRatio;
+        desiredHdrSdrRatio = requested.desiredHdrSdrRatio;
+    }
+    if (forceUpdate || requested.what & layer_state_t::eDesiredHdrHeadroomChanged) {
         desiredHdrSdrRatio = requested.desiredHdrSdrRatio;
     }
     if (forceUpdate || requested.what & layer_state_t::eCachingHintChanged) {
